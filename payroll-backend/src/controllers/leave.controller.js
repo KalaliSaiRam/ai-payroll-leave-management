@@ -356,12 +356,18 @@ exports.getLeaveBalance = async (req, res) => {
     const result = await pool.query(
       `
       SELECT leave_type,
-             SUM(end_date - start_date + 1) AS total_days
-      FROM leaves
-      WHERE employee_id = $1
-      AND status IN ('APPROVED', 'PENDING')
-      AND EXTRACT(YEAR FROM start_date) = $2
-      GROUP BY leave_type
+          COALESCE(
+          SUM(
+          (
+          LEAST(
+          end_date, MAKE_DATE($2,12,31)) -GREATEST(start_date,MAKE_DATE($2,1,1)))+1),0) 
+          AS total_days
+          FROM leaves
+          WHERE employee_id=$1
+          AND status IN ('APPROVED','PENDING')
+          AND start_date <= MAKE_DATE($2,12,31)
+          AND end_date >= MAKE_DATE($2,1,1)
+          GROUP BY leave_type
       `,
       [employeeId, year]
     );
@@ -377,8 +383,8 @@ exports.getLeaveBalance = async (req, res) => {
     });
 
     const balance = {
-      CL: 12 - used.CL,
-      SL: 8 - used.SL,
+      CL: Math.max(0,12 - used.CL),
+      SL: Math.max(0, 8 - used.SL),
       LOP: "Unlimited"
     };
 

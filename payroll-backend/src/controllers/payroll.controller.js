@@ -48,7 +48,12 @@ exports.runPayroll = async (req, res) => {
     if (!month || !year) {
       return res.status(400).json({ message: "Month and year are required" });
     }
-
+    if(month < 1 || month >12){
+      return res.status(400).json({message : "Invalid month"});
+    }
+    if(year <2020 || year > 2100){
+      return res.status(400).json({message:"Invalid year"});
+    }
     await client.query("BEGIN");
 
     // 1. Check if payroll already ran
@@ -136,8 +141,8 @@ const lopResult = await client.query(
 
 const lopDays = Number(lopResult.rows[0].lop_days);
 
-      const lopDeduction = lopDays * dailySalary;
-      const netSalary = monthlySalary - lopDeduction;
+      const lopDeduction = Number((lopDays * dailySalary).toFixed(2));
+      const netSalary = Number(Math.max(0, monthlySalary - lopDeduction).toFixed(2));
 
       // 6. Generate payslip
       await client.query(

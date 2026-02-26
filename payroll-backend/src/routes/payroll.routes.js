@@ -12,8 +12,6 @@ router.post(
   payrollController.assignSalary
 );
 
-module.exports = router;
-
 // HR runs payroll
 router.post(
   "/run",
@@ -29,3 +27,5 @@ router.get(
   allowRoles("EMPLOYEE"),
   payrollController.getMyPayslips
 );
+
+module.exports = router;

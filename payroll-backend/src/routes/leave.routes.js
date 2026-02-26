@@ -4,7 +4,7 @@ const router = express.Router();
 const { verifyToken, allowRoles } = require("../middleware/auth.middleware");
 const leaveController = require("../controllers/leave.controller");
 
-// Employee applies for leave
+// Apply Leave
 router.post(
   "/apply",
   verifyToken,
@@ -12,25 +12,7 @@ router.post(
   leaveController.applyLeave
 );
 
-module.exports = router;
-
-// Manager views team leave requests
-router.get(
-  "/manager",
-  verifyToken,
-  allowRoles("MANAGER", "HR"),
-  leaveController.getManagerLeaves
-);
-
-// Manager approves / rejects leave
-router.put(
-  "/:leaveId/status",
-  verifyToken,
-  allowRoles("MANAGER", "HR"),
-  leaveController.updateLeaveStatus
-);
-
-// Employee views own leave history
+// Employee Leave History ⭐
 router.get(
   "/my",
   verifyToken,
@@ -38,10 +20,28 @@ router.get(
   leaveController.getMyLeaves
 );
 
-// Employee views leave balance
+// Leave Balance ⭐
 router.get(
   "/balance",
   verifyToken,
   allowRoles("EMPLOYEE"),
   leaveController.getLeaveBalance
 );
+
+// Manager Leaves
+router.get(
+  "/manager",
+  verifyToken,
+  allowRoles("MANAGER","HR"),
+  leaveController.getManagerLeaves
+);
+
+// Update Status
+router.put(
+  "/:leaveId/status",
+  verifyToken,
+  allowRoles("MANAGER","HR"),
+  leaveController.updateLeaveStatus
+);
+
+module.exports = router;
