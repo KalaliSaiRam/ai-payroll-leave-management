@@ -134,7 +134,9 @@ import PayslipDetail from "./pages/employee/PayslipDetail";
 import EmployeeProfile from "./pages/employee/EmployeeProfile";
 
 import LeaveRequests from "./pages/manager/LeaveRequests";
+import ManagerOverview from "./pages/manager/ManagerOverview";
 import PayrollManagement from "./pages/hr/PayrollManagement";
+import ManagerLeaves from "./pages/manager/ManagerLeaves";
 
 import DashboardLayout from "./components/layout/DashboardLayout";
 
@@ -179,6 +181,7 @@ function App() {
         path="/manager"
         element={
           <ProtectedRoute allowedRoles={["MANAGER"]}>
+            <ManagerOverview />
             <ManagerDashboard />
           </ProtectedRoute>
         }
@@ -188,7 +191,8 @@ function App() {
         path="/manager/leaves"
         element={
           <ProtectedRoute allowedRoles={["MANAGER"]}>
-            <LeaveRequests />
+            {/* <LeaveRequests /> */}
+            <ManagerLeaves />
           </ProtectedRoute>
         }
       />
