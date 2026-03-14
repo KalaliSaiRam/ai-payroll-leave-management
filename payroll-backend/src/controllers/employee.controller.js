@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const bcrypt = require("bcrypt");
 
 /* ===============================
    GET PROFILE
@@ -174,4 +175,84 @@ message:"Server error"
 
 }
 
+};
+
+
+/* ===============================
+   HR: GET ALL EMPLOYEES
+================================= */
+
+exports.getAllEmployees = async(req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        u.id,
+        u.name,
+        u.email,
+        u.department,
+        e.designation,
+        e.base_salary,
+        u.doj
+      FROM users u
+      LEFT JOIN employees e ON u.id = e.user_id
+      WHERE u.role_id = 2 OR u.role_id = 1
+      ORDER BY u.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ===============================
+   HR: CREATE EMPLOYEE
+================================= */
+
+exports.createEmployee = async(req, res) => {
+  const client = await pool.connect();
+  try {
+    const { name, email, department, designation, base_salary, manager_id } = req.body;
+    
+    await client.query("BEGIN");
+    
+    // Automate hashpass structure as requested
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash("Welcome@123", salt);
+    
+    // Insert into users
+    const userRes = await client.query(
+      `INSERT INTO users (name, email, password_hash, role_id, department) 
+       VALUES ($1, $2, $3, 2, $4) RETURNING id`,
+      [name, email, password_hash, department]
+    );
+    
+    const userId = userRes.rows[0].id;
+    
+    // Insert into employees
+    await client.query(
+      `INSERT INTO employees (user_id, manager_id, department, designation, base_salary)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, manager_id || null, department, designation || 'Employee', base_salary || 50000]
+    );
+    
+    // Initialize leave balance
+    await client.query(
+      `INSERT INTO leave_balances (employee_id, year, cl_balance, sl_balance)
+       VALUES ($1, extract(year from current_date), 12, 12)`,
+      [userId]
+    );
+    
+    await client.query("COMMIT");
+    res.status(201).json({ message: "Employee created successfully with default password 'Welcome@123'" });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error(err);
+    if (err.code === '23505') {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+    res.status(500).json({ message: "Server error" });
+  } finally {
+    client.release();
+  }
 };

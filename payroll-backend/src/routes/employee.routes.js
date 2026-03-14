@@ -32,5 +32,21 @@ allowRoles("MANAGER"),
 employeeController.getTeam
 );
 
+/* HR / Admin Routes ⭐ */
+
+router.get(
+"/all",
+verifyToken,
+allowRoles("HR"),
+employeeController.getAllEmployees
+);
+
+router.post(
+"/create",
+verifyToken,
+allowRoles("HR"),
+employeeController.createEmployee
+);
+
 
 module.exports=router;
